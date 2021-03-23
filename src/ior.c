@@ -307,8 +307,7 @@ static void CheckFileSize(IOR_test_t *test, IOR_offset_t dataMoved, int rep,
                                 1, MPI_LONG_LONG_INT, MPI_SUM, testComm),
                   "cannot total data moved");
 
-        if (strcasecmp(params->api, "HDF5") != 0 && strcasecmp(params->api, "NCMPI") != 0 &&
-            strcasecmp(params->api, "DAOS") != 0) {
+        if (strcasecmp(params->api, "HDF5") != 0 && strcasecmp(params->api, "NCMPI") != 0) {
                 if (verbose >= VERBOSE_0 && rank == 0) {
                         if ((params->expectedAggFileSize
                              != point->aggFileSizeFromXfer)
@@ -1626,7 +1625,6 @@ static void ValidateTests(IOR_param_t * test)
             && (strcasecmp(test->api, "MMAP") != 0)
             && (strcasecmp(test->api, "HDFS") != 0)
             && (strcasecmp(test->api, "DFS") != 0)
-            && (strcasecmp(test->api, "DAOS") != 0)
             && (strcasecmp(test->api, "Gfarm") != 0)
             && (strcasecmp(test->api, "RADOS") != 0)
             && (strcasecmp(test->api, "CEPHFS") != 0)) && test->fsync)

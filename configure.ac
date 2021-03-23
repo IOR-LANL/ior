@@ -211,40 +211,25 @@ AM_COND_IF([USE_CEPHFS_AIORI],[
         AC_DEFINE([USE_CEPHFS_AIORI], [], [Build CEPHFS backend AIORI])
 ])
 
-# DAOS Backends (DAOS and DFS) IO support require DAOS and CART/GURT
-AC_ARG_WITH([cart],
-    [AS_HELP_STRING([--with-cart],
-	    [support IO with DAOS backends @<:@default=no@:>@])],
-    [], [with_cart=no])
-
-AS_IF([test "x$with_cart" != xno], [
-    CART="yes"
-    LDFLAGS="$LDFLAGS -L$with_cart/lib64 -Wl,--enable-new-dtags -Wl,-rpath=$with_cart/lib64"
-    LDFLAGS="$LDFLAGS -L$with_cart/lib -Wl,--enable-new-dtags -Wl,-rpath=$with_cart/lib"
-    CPPFLAGS="$CPPFLAGS -I$with_cart/include/"
-    AC_CHECK_HEADERS(gurt/common.h,, [unset CART])
-    AC_CHECK_LIB([gurt], [d_hash_murmur64],, [unset CART])
-])
-
+# DAOS-FS Backend (DFS)
 AC_ARG_WITH([daos],
     [AS_HELP_STRING([--with-daos],
-	    [support IO with DAOS backends @<:@default=no@:>@])],
+	    [support IO with DAOS backend @<:@default=no@:>@])],
     [], [with_daos=no])
-
 AS_IF([test "x$with_daos" != xno], [
     DAOS="yes"
     LDFLAGS="$LDFLAGS -L$with_daos/lib64 -Wl,--enable-new-dtags -Wl,-rpath=$with_daos/lib64"
     CPPFLAGS="$CPPFLAGS -I$with_daos/include"
-    AC_CHECK_HEADERS(daos_types.h,, [unset DAOS])
+    AC_CHECK_HEADERS(gurt/common.h,, [unset DAOS])
+    AC_CHECK_HEADERS(daos.h,, [unset DAOS])
+    AC_CHECK_LIB([gurt], [d_hash_murmur64],, [unset DAOS])
     AC_CHECK_LIB([uuid], [uuid_generate],, [unset DAOS])
-    AC_CHECK_LIB([daos_common], [daos_sgl_init],, [unset DAOS])
     AC_CHECK_LIB([daos], [daos_init],, [unset DAOS])
     AC_CHECK_LIB([dfs], [dfs_mkdir],, [unset DAOS])
 ])
-
 AM_CONDITIONAL([USE_DAOS_AIORI], [test x$DAOS = xyes])
 AM_COND_IF([USE_DAOS_AIORI],[
-        AC_DEFINE([USE_DAOS_AIORI], [], [Build DAOS backends AIORI])
+        AC_DEFINE([USE_DAOS_AIORI], [], [Build DAOS-FS backend AIORI])
 ])
 
 # Gfarm support

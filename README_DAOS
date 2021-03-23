@@ -4,55 +4,13 @@ Building
 The DAOS library must be installed on the system.
 
 ./bootstrap
-./configure --prefix=iorInstallDir --with-daos=DIR --with-cart=DIR
-
-One must specify "--with-daos=/path/to/daos/install and --with-cart".  When that
-is specified the DAOS and DFS driver will be built.
-
-The DAOS driver uses the DAOS API to open a container (or create it if it
-doesn't exist first) then create an array object in that container (file) and
-read/write to the array object using the daos Array API. The DAOS driver works
-with IOR only (no mdtest support yet). The file name used by IOR (passed by -o
-option) is hashed to an object ID that is used as the array oid.
+./configure --prefix=iorInstallDir --with-daos=DIR
 
 The DFS (DAOS File System) driver creates an encapsulated namespace and emulates
 the POSIX driver using the DFS API directly on top of DAOS. The DFS driver works
 with both IOR and mdtest.
 
-Running with DAOS API
----------------------
-
-ior -a DAOS [ior_options] [daos_options]
-
-In the IOR options, the file name should be specified as a container uuid using
-"-o <container_uuid>". If the "-E" option is given, then this UUID shall denote
-an existing container created by a "matching" IOR run. Otherwise, IOR will
-create a new container with this UUID.  In the latter case, one may use
-uuidgen(1) to generate the UUID of the new container.
-
-The DAOS options include:
-
-Required Options:
---daos.pool <pool_uuid>: pool uuid to connect to (has to be created beforehand)
---daos.svcl <pool_svcl>: pool svcl list (: separated)
---daos.cont <cont_uuid>: container for the IOR files/objects (can use `uuidgen`)
-
-Optional Options:
---daos.group <group_name>: group name of servers with the pool
---daos.chunk_size	<chunk_size>: Chunk size of the array object controlling striping over DKEYs
---daos.destroy		flag to destory the container on finalize
---daos.oclass		<object_class>: specific object class for array object
-
-Examples that should work include:
-
-  - "ior -a DAOS -w -W -o file_name --daos.pool <pool_uuid> --daos.svcl <svc_ranks>\
-    --daos.cont <cont_uuid>"
-
-  - "ior -a DAOS -w -W -r -R -o file_name -b 1g -t 4m \
-    --daos.pool <pool_uuid> --daos.svcl <svc_ranks> --daos.cont <cont_uuid>\
-    --daos.chunk_size 1024 --daos.oclass R2"
-
-Running with DFS API
+Running
 ---------------------
 
 ior -a DFS [ior_options] [dfs_options]
@@ -64,15 +22,17 @@ Required Options:
 --dfs.cont <co_uuid>: container uuid that will hold the encapsulated namespace
 
 Optional Options:
---dfs.group <group_name>: group name of servers with the pool
---dfs.chunk_size	<chunk_size>: Chunk size of the files
---dfs.destroy		flag to destory the container on finalize
---dfs.oclass		<object_class>: specific object class for files
+--dfs.group <group_name>: group name of servers with the pool (default: daos_server)
+--dfs.chunk_size <chunk_size>: Chunk size of the files (default: 1MiB)
+--dfs.destroy: flag to destroy the container on finalize (default: no)
+--dfs.oclass <object_class>: specific object class for files (default: SX)
+--dfs.dir_oclass <object_class>: specific object class for directories (default: SX)
+--dfs.prefix <path>: absolute path to account for DFS files/dirs before the cont root
 
-In the IOR options, the file name should be specified on the root dir directly
-since ior does not create directories and the DFS container representing the
-encapsulated namespace is not the same as the system namespace the user is
-executing from.
+If prefix is not set, in the IOR options, the file name should be specified on
+the root dir directly since ior does not create directories and the DFS
+container representing the encapsulated namespace is not the same as the system
+namespace the user is executing from.
 
 Examples that should work include:
   - "ior -a DFS -w -W -o /test1 --dfs.pool <pool_uuid> --dfs.svcl <svc_ranks> --dfs.cont <co_uuid>"
@@ -80,7 +40,8 @@ Examples that should work include:
   - "ior -a DFS -w -r -o /test3 -b 8g -t 1m -C --dfs.pool <pool_uuid> --dfs.svcl <svc_ranks> --dfs.cont <co_uuid>"
 
 Running mdtest, the user needs to specify a directory with -d where the test
-tree will be created. Some examples:
-  - "mdtest -a DFS -n 100 -F -D -d /bla --dfs.pool <pool_uuid> --dfs.svcl <svc_ranks> --dfs.cont <co_uuid>"
-  - "mdtest -a DFS -n 1000 -F -C -d /bla --dfs.pool <pool_uuid> --dfs.svcl <svc_ranks> --dfs.cont <co_uuid>"
-  - "mdtest -a DFS -I 10 -z 5 -b 2 -L -d /bla --dfs.pool <pool_uuid> --dfs.svcl <svc_ranks> --dfs.cont <co_uuid>"
+tree will be created (set '/' if writing to the root of the DFS container). Some
+examples:
+  - "mdtest -a DFS -n 100 -F -D -d / --dfs.pool <pool_uuid> --dfs.svcl <svc_ranks> --dfs.cont <co_uuid>"
+  - "mdtest -a DFS -n 1000 -F -C -d / --dfs.pool <pool_uuid> --dfs.svcl <svc_ranks> --dfs.cont <co_uuid>"
+  - "mdtest -a DFS -I 10 -z 5 -b 2 -L -d / --dfs.pool <pool_uuid> --dfs.svcl <svc_ranks> --dfs.cont <co_uuid>"

@@ -77,7 +77,8 @@ endif
 
 
 if USE_DAOS_AIORI
-extraSOURCES += aiori-DAOS.c aiori-DFS.c
+extraSOURCES += aiori-DFS.c
+extraLDADD   += -lgurt -ldaos_common -ldaos -ldfs -luuid
 endif
 
 if USE_GFARM_AIORI

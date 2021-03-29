@@ -1938,7 +1938,7 @@ static void mdtest_iteration(int i, int j, MPI_Group testgroup, mdtest_results_t
 #ifdef HAVE_LUSTRE_LUSTREAPI
           /* internal node for branching, can be non-striped for children */
           if (o.global_dir_layout && o.unique_dir_per_task && llapi_dir_set_default_lmv_stripe(o.testdir, -1, 0, LMV_HASH_TYPE_FNV_1A_64, NULL) == -1) {
-              EWARNF("Unable to reset to global default directory layout");
+              EWARNF("Unable to reset to global default directory layout", 0);
           }
 #endif /* HAVE_LUSTRE_LUSTREAPI */
       }

@@ -187,7 +187,7 @@ static int HDF5_check_params(aiori_mod_opt_t * options){
     /* no-fill option not available until hdf5-1.6.x */
 #if (H5_VERS_MAJOR > 0 && H5_VERS_MINOR > 5)
 #else
-    ERRF("'no fill' option not available in HDF5");
+    ERR("'no fill' option not available in HDF5");
 #endif
 #else
     WARN("unable to determine HDF5 version for 'no fill' usage");

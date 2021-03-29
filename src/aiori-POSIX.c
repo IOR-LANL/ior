@@ -546,7 +546,7 @@ aiori_fd_t *POSIX_Open(char *testFileName, int flags, aiori_mod_opt_t * param)
         if (o->lustre_ignore_locks) {
                 int lustre_ioctl_flags = LL_FILE_IGNORE_LOCK;
                 if (verbose >= VERBOSE_1) {
-                        EINFO("** Disabling lustre range locking **\n");
+                        EINFO("** Disabling lustre range locking **\n", 0);
                 }
                 if (ioctl(pfd->fd, LL_IOC_SETFLAGS, &lustre_ioctl_flags) == -1)
                         ERRF("ioctl(%d, LL_IOC_SETFLAGS, ...) failed", pfd->fd);

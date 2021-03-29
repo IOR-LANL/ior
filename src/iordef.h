@@ -22,7 +22,8 @@
 typedef enum {
   DATA_TIMESTAMP, /* Will not include any offset, hence each buffer will be the same */
   DATA_OFFSET,
-  DATA_INCOMPRESSIBLE /* Will include the offset as well */
+  DATA_INCOMPRESSIBLE,  /* Will include the offset as well */
+  DATA_RANDOM           /* fully scrambled blocks */
 } ior_dataPacketType_e;
 
 #ifdef _WIN32

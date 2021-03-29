@@ -59,6 +59,8 @@
 #include "ior.h"
 #include "ior-internal.h"
 
+#define RANDALGO_GOLDEN_RATIO_PRIME        0x9e37fffffffc0001UL
+
 /************************** D E C L A R A T I O N S ***************************/
 
 extern int errno;
@@ -73,25 +75,77 @@ FILE * out_logfile = NULL;
 FILE * out_resultfile = NULL;
 enum OutputFormat_t outputFormat;
 
+/* local */
+int rand_state_init = 0;
+uint64_t rand_state = 0;
+
 /***************************** F U N C T I O N S ******************************/
 
+/**
+ * Modifies a buffer for a write.  Performance sensitive because it is called
+ * before each write.
+ *
+ * @param buf pointer to byte buffer to fill
+ * @param bytes number of bytes to produce to fill buffer
+ * @param rand_seed seed to use for PRNG
+ * @param pretendRank unique identifier for this process
+ * @param dataPacketType identifier to designate pattern to fill buffer
+ */
 void update_write_memory_pattern(uint64_t item, char * buf, size_t bytes, int rand_seed, int pretendRank, ior_dataPacketType_e dataPacketType){
-  if(dataPacketType == DATA_TIMESTAMP || bytes < 8) return;
-  int k=1;
+  if (dataPacketType == DATA_TIMESTAMP || bytes < 8)
+    return;
+
+  size_t size = bytes / sizeof(uint64_t);
   uint64_t * buffi = (uint64_t*) buf;
-  for(size_t i=0; i < bytes/sizeof(uint64_t); i+=512, k++){
+
+  if (dataPacketType == DATA_RANDOM) {
+      if (!rand_state_init) {
+          unsigned seed = rand_seed + pretendRank;
+          rand_state_init = 1;
+          rand_state = rand_r(&seed);
+      }
+      for (size_t i = 0; i < size; i++) {
+          rand_state *= RANDALGO_GOLDEN_RATIO_PRIME;
+          rand_state >>= 3;
+          buffi[i] = rand_state;
+      }
+      return;
+  }
+
+  /* DATA_INCOMPRESSIBLE and DATA_OFFSET */
+  int k = 1;
+  for(size_t i=0; i < size; i+=512, k++){
     buffi[i] = ((uint32_t) item * k) | ((uint64_t) pretendRank) << 32;
   }
 }
 
+/**
+ * Fills a buffer with bytes of a given pattern.  Not performance-sensitive
+ * because it is called once per test.
+ *
+ * @param buf pointer to byte buffer to fill
+ * @param bytes number of bytes to produce to fill buffer
+ * @param rand_seed seed to use for PRNG
+ * @param pretendRank unique identifier for this process
+ * @param dataPacketType identifier to designate pattern to fill buffer
+ */
 void generate_memory_pattern(char * buf, size_t bytes, int rand_seed, int pretendRank, ior_dataPacketType_e dataPacketType){
   uint64_t * buffi = (uint64_t*) buf;
   // first half of 64 bits use the rank
   const size_t size = bytes / 8;
   // the first 8 bytes of each 4k block are updated at runtime
   unsigned seed = rand_seed + pretendRank;
+  if (dataPacketType == DATA_RANDOM && !rand_state_init) {
+      rand_state_init = 1;
+      rand_state = rand_r(&seed);
+  }
   for(size_t i=0; i < size; i++){
     switch(dataPacketType){
+      case(DATA_RANDOM):
+        rand_state *= RANDALGO_GOLDEN_RATIO_PRIME;
+        rand_state >>= 3;
+        buffi[i] = rand_state;
+        break;
       case(DATA_INCOMPRESSIBLE):{
         uint64_t hi = ((uint64_t) rand_r(& seed) << 32);
         uint64_t lo = (uint64_t) rand_r(& seed);
@@ -123,6 +177,11 @@ int verify_memory_pattern(uint64_t item, char * buffer, size_t bytes, int rand_s
     uint64_t exp;
         
     switch(dataPacketType){
+      case(DATA_RANDOM):
+        rand_state *= RANDALGO_GOLDEN_RATIO_PRIME;
+        rand_state >>= 3;
+        buffi[i] = rand_state;
+        break;
       case(DATA_INCOMPRESSIBLE):{
         uint64_t hi = ((uint64_t) rand_r(& seed) << 32);
         uint64_t lo = (uint64_t) rand_r(& seed);
@@ -212,6 +271,8 @@ ior_dataPacketType_e parsePacketType(char t){
             return DATA_TIMESTAMP;
     case 'o': /* offset packet */
             return DATA_OFFSET;
+    case 'r': /* randomized blocks */
+            return DATA_RANDOM;
     default:
       ERRF("Unknown packet type \"%c\"; generic assumed\n", t);
       return DATA_OFFSET;

@@ -370,8 +370,8 @@ IOR_test_t *ReadConfigScript(char *scriptName)
                         continue;
 
                 /* skip lines containing only comments */
-                if (sscanf(ptr, " #%s", empty) == 1)
-                        continue;
+                if (sscanf(ptr, " #%c", empty) == 1)
+                        continue;                
 
                 if (contains_only(ptr, "ior stop")) {
                         break;

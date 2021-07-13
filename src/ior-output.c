@@ -96,7 +96,11 @@ static void PrintKeyValDouble(char * key, double value){
     return;
   }
   if(outputFormat == OUTPUT_JSON){
-    fprintf(out_resultfile, "\"%s\": %.4f", key, value);
+    if(isinf(value)){
+      fprintf(out_resultfile, "\"%s\": \"%.4f\"", key, value);
+    }else{
+      fprintf(out_resultfile, "\"%s\": %.4f", key, value);
+    }
   }else if(outputFormat == OUTPUT_CSV){
     fprintf(out_resultfile, "%.4f,", value);
   }
